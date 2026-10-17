@@ -6,7 +6,9 @@
  *                  (skipped on localhost/dev ports, preview iframes and
  *                   known preview hosts / insecure origins).
  *                - Shows a friendly "install as an app" popup
- *                  (auto prompt on Chromium, instructions on iOS Safari).
+ *                  (native prompt on Chromium, instructions on iOS/others).
+ *   2026-10-17 : Improved install popup – now appears reliably on mobile
+ *                visits even when the native beforeinstallprompt is delayed.
  * ---------------------------------------------------------------------------
  */
 (function () {
@@ -68,6 +70,10 @@
            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   }
 
+  function isMobile() {
+    return /android|iphone|ipad|ipod|iemobile|opera mini|mobile|silk|kindle/i.test(navigator.userAgent);
+  }
+
   /* ---------- styles (injected, keeps the HTML/CSS untouched) ---------- */
   function injectStyles() {
     if (document.getElementById('pwa-install-style')) return;
@@ -127,7 +133,7 @@
   }
 
   function showPopup(text) {
-    if (shown) return;
+    if (shown) { if (popup) popup.querySelector('.pwa-text').textContent = text; return; }
     shown = true;
     if (!popup) popup = buildPopup();
     popup.querySelector('.pwa-text').textContent = text;
@@ -149,10 +155,9 @@
         deferredPrompt = null;
       });
     } else {
-      /* iOS / fallback: show manual instructions */
       showPopup(isIOS()
         ? 'اضغط زر المشاركة ⬆️ في أسفل Safari ثم اختر «إضافة إلى الشاشة الرئيسية».'
-        : 'افتح قائمة المتصفح ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».');
+        : 'افتح قائمة المتصفح (⋮) ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».');
     }
   }
 
@@ -161,7 +166,7 @@
     e.preventDefault();
     deferredPrompt = e;
     if (!isStandalone() && !recentlyDismissed()) {
-      showPopup('يمكنك تنزيل الموقع كتطبيق واستخدامه حتى بدون إنترنت.');
+      showPopup('يمكنك تنزيل الموقع كتطبيق وتثبيته على هاتفك، ثم استخدامه حتى دون إنترنت.');
     }
   });
 
@@ -171,12 +176,20 @@
     console.info('[PWA] App installed.');
   });
 
-  /* ---------- iOS Safari: no beforeinstallprompt, show instructions ---------- */
-  if (isIOS() && !isStandalone() && !recentlyDismissed()) {
-    window.addEventListener('load', function () {
+  /* ---------- Fallback: mobile visits where the native prompt is delayed ---------- */
+  window.addEventListener('load', function () {
+    if (isStandalone() || recentlyDismissed()) return;
+
+    if (isIOS()) {
       window.setTimeout(function () {
         if (!shown) showPopup('لإضافة التطبيق: اضغط زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية».');
-      }, 3500);
-    });
-  }
+      }, 3000);
+    } else if (isMobile()) {
+      window.setTimeout(function () {
+        if (!shown && !deferredPrompt) {
+          showPopup('يمكنك تثبيت الموقع كتطبيق من قائمة المتصفح ⋮ عبر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».');
+        }
+      }, 4500);
+    }
+  });
 })();
