@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Add hover effect to lesson cards
-  const lessonCards = document.querySelectorAll('.lesson-card';
+  const lessonCards = document.querySelectorAll('.lesson-card');
   
   lessonCards.forEach(card => {
     card.addEventListener('mouseenter', function() {
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Add hover effect to feature cards
-  const featureCards = document.querySelectorAll('.feature-card';
+  const featureCards = document.querySelectorAll('.feature-card');
   
   featureCards.forEach(card => {
     card.addEventListener('mouseenter', function() {
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   // Navbar background on scroll
-  const navbar = document.querySelector('.navbar';
+  const navbar = document.querySelector('.navbar');
   
   window.addEventListener('scroll', function() {
     if (window.scrollY > 50) {
